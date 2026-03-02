@@ -1,0 +1,60 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate Xcode Project
+        run: |
+          swift package generate-xcodeproj
+
+      - name: Build
+        run: |
+          xcodebuild \
+          -project Settings.xcodeproj \
+          -scheme Settings-Package \
+          -destination 'generic/platform=iOS' \
+          -configuration Release \
+          build
+
+      - name: Archive
+        run: |
+          xcodebuild \
+          -project Settings.xcodeproj \
+          -scheme Settings-Package \
+          -destination 'generic/platform=iOS' \
+          -configuration Release \
+          -archivePath build/Settings.xcarchive \
+          archive
+
+      - name: Export IPA
+        run: |
+          mkdir -p build/export
+          cat > build/exportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+          "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>development</string>
+          </dict>
+          </plist>
+          EOF
+
+          xcodebuild -exportArchive \
+            -archivePath build/Settings.xcarchive \
+            -exportOptionsPlist build/exportOptions.plist \
+            -exportPath build/export
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Settings-IPA
+          path: build/export/*.ipa
