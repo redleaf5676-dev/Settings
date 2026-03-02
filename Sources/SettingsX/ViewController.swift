@@ -14,7 +14,7 @@ class ViewController: UIViewController {
 
         view = webView
 
-        let url = URL(string: "https://172.20.10.2:3000")!
+        let url = URL(string: "http://172.20.10.2:3000")!
         webView.load(URLRequest(url: url))
     }
 
